@@ -1,4 +1,4 @@
-import java.util.ArrayList;
+ import java.util.ArrayList;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -54,7 +54,7 @@ public class Battleship
 			int result = JOptionPane.showConfirmDialog(null, startGame, "Battleship", JOptionPane.OK_CANCEL_OPTION);
 			if(result == JOptionPane.CANCEL_OPTION) System.exit(0);
 		} while(ipAddy == null || portNum == null || name == null);
-		
+		teamName = name.getText();
 	}
 
 	public static void printShips()
