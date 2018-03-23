@@ -21,10 +21,27 @@ public class Ship implements Serializable
 		coords.add(coordinate);
 		buildArray();
 	}
+	
+	public Ship(String team, int length, String shipClass)
+	{
+		this.team = team;
+		this.length = length;
+		this.shipClass = shipClass;
+	}
 
 	public void setOrientation(int orientation)
 	{
+		Coordinate temp = coords.get(0);
+		coords.clear();
+		coords.add(temp);
 		this.orientation = orientation;
+		buildArray();
+	}
+	
+	public void setCoords(Coordinate coordinate)
+	{
+		coords.clear();
+		coords.add(coordinate);
 		buildArray();
 	}
 
@@ -34,14 +51,14 @@ public class Ship implements Serializable
 		{
 			for(int i = 1; i < length; i++)
 			{
-				coords.add(new Coordinate(coords.get(0).getX() + i, coords.get(0).getY()));
+				coords.add(new Coordinate(coords.get(0).getX(), coords.get(0).getY() + i));
 			}
 		}
 		else
 		{
 			for(int i = 1; i < length; i++)
 			{
-				coords.add(new Coordinate(coords.get(0).getX(), coords.get(0).getY() + i));
+				coords.add(new Coordinate(coords.get(0).getX() + i, coords.get(0).getY()));
 			}
 		}
 	}
@@ -62,7 +79,7 @@ public class Ship implements Serializable
 
 	public String toString()
 	{
-		return team + "'s " + shipClass + " is at " + coords.toString();
+		return team + "'s " + shipClass + " at " + coords.toString();
 	}
 
 }
@@ -76,17 +93,27 @@ class Carrier extends Ship
 	{
 		super(t, c, o, length, shipClass);
 	}
+	
+	public Carrier(String t)
+	{
+		super(t, length, shipClass);
+	}
 
 }
 
 class Warship extends Ship
 {
 	private static String shipClass = "Warship";
-	private static int length = 3;
+	private static int length = 4;
 
 	public Warship(String t, Coordinate c, int o)
 	{
 		super(t, c, o, length, shipClass);
+	}
+	
+	public Warship(String t)
+	{
+		super(t, length, shipClass);
 	}
 
 }
@@ -100,6 +127,11 @@ class Submarine extends Ship
 	{
 		super(t, c, o, length, shipClass);
 	}
+	
+	public Submarine(String t)
+	{
+		super(t, length, shipClass);
+	}
 
 }
 
@@ -112,6 +144,11 @@ class Cruiser extends Ship
 	{
 		super(t, c, o, length, shipClass);
 	}
+	
+	public Cruiser(String t)
+	{
+		super(t, length, shipClass);
+	}
 
 }
 
@@ -123,6 +160,11 @@ class Destroyer extends Ship
 	public Destroyer(String t, Coordinate c, int o)
 	{
 		super(t, c, o, length, shipClass);
+	}
+	
+	public Destroyer(String t)
+	{
+		super(t, length, shipClass);
 	}
 
 }

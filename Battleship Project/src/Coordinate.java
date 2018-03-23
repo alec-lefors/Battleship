@@ -31,7 +31,7 @@ public class Coordinate implements Serializable
 	public static Coordinate toCoordinate(String notation)
 	{
 		return new Coordinate(((int) notation.charAt(0)) - 65,
-				Integer.parseInt(Character.toString(notation.charAt(1))) - 1);
+				Integer.parseInt(notation.substring(1)) - 1);
 	}
 
 	public boolean equalsTo(Object obj)

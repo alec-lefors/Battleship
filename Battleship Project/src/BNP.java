@@ -62,6 +62,24 @@ class Sunk extends BNP
 	}
 }
 
+class Team extends BNP
+{
+	public Team(String teamName)
+	{
+		setMessageType("TEAM");
+		setMessage(teamName);
+	}
+}
+
+class Ready extends BNP
+{
+	public Ready()
+	{
+		setMessageType("READY");
+		setMessage("READY");
+	}
+}
+
 class Quit extends BNP
 {
 	public Quit()
