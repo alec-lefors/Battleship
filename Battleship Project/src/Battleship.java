@@ -21,12 +21,14 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
+import javax.swing.text.DefaultCaret;
 
 /**
  * 
@@ -46,7 +48,7 @@ import javax.swing.border.TitledBorder;
 public class Battleship extends Thread implements ActionListener
 {
 
-	private static ArrayList<Ship> myShips = new ArrayList<Ship>();
+	private static volatile ArrayList<Ship> myShips = new ArrayList<Ship>();
 	private static ArrayList<JButton> myGrid = new ArrayList<JButton>();
 	private static ArrayList<JButton> theirGrid = new ArrayList<JButton>();
 	private static ArrayList<Coordinate> misses = new ArrayList<Coordinate>();
@@ -68,6 +70,11 @@ public class Battleship extends Thread implements ActionListener
 	private static int orientation = Ship.HORIZONTAL;
 	private static Object currentSelection = "";
 	private static Coordinate coordSelection;
+	private static JPanel options = new JPanel();
+	private static JScrollPane console = new JScrollPane(consoleLabel);
+	private static JScrollBar scroll = console.getVerticalScrollBar();
+	private static JTextField chatText = new JTextField(20);
+	private static JButton sendChat = new JButton("Send");
 	
 	private static JButton addCarrier = new JButton("Carrier");
 	private static JButton addWarship = new JButton("Battleship");
@@ -79,7 +86,8 @@ public class Battleship extends Thread implements ActionListener
 	private static JButton setOrientation = new JButton("Horizontal");
 	private static volatile Boolean readyUp = false;
 	private static volatile Boolean enemyReady = false;
-	private static JPanel options = new JPanel();
+	private static volatile Boolean gameIsReady = false;
+	
 
 	public static void main(String[] args) throws IOException
 	{
@@ -108,16 +116,17 @@ public class Battleship extends Thread implements ActionListener
 		public void run()
 		{
 			sendMessage(new Team(teamName));
-			waitForInitialConnection();
+			try {
+				Thread.sleep(700);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			theirBorder.setTitle(enemyTeam + "'s Board");
 			theirBoard.repaint();
-			for(int i = 0; i < myGrid.size(); i++) myGrid.get(i).setEnabled(true);
+			sendChat.setEnabled(true);
 			placeShips();
-			for(int i = 0; i < myGrid.size(); i++) myGrid.get(i).setEnabled(false);
-			do
-			{
-				toConsole("Waiting on " + enemyTeam + ".");
-			} while(!enemyReady);
+			toConsole("Waiting on " + enemyTeam + ".");
+			while(!enemyReady) {}
 			nextTurn();
 		}
 	};
@@ -135,40 +144,38 @@ public class Battleship extends Thread implements ActionListener
 		}
 	}
 	
+	public static void setMyGrid(boolean tf)
+	{
+		for(int i = 0; i < myGrid.size(); i++)
+		{
+			myGrid.get(i).setEnabled(tf);
+		}
+	}
+	
 	public static void placeShips()
 	{
 		toConsole("Place your ships.");
-		do
-		{
-			for(int i = 0; i < menuButtons.size(); i++) menuButtons.get(i).setEnabled(true);
-			if(myShips.size() == 5) 
-			{
-				toConsole("Press finished when you are done.");
-				finishedButton.setEnabled(true);
-			}
-		} while(!readyUp);
-		finishedButton.setEnabled(false);
+		for(int i = 0; i < menuButtons.size(); i++) menuButtons.get(i).setEnabled(true);
+		setMyGrid(true);
+		while(myShips.size() != 5) {}
+		finishedButton.setEnabled(true);
+		toConsole("Press finished when you are done.");
+		while(!readyUp) {}
+		finishedButton.setVisible(false);
 		for(int i = 0; i < menuButtons.size(); i++) menuButtons.get(i).setEnabled(false);
-		options.setVisible(false); // Please make MenuBar for other settings such as Quit!
-	}
-	
-	public static void waitForInitialConnection()
-	{
-		toConsole("Waiting for game to start.");
-		do{} while(enemyTeam.equals("") && !myGrid.get(100).isEnabled());
+		setMyGrid(false);
+		for(int i = 0; i < menuButtons.size(); i++) menuButtons.get(i).setVisible(false);
 	}
 
 	public Battleship()
 	{
 		JFrame frame = new JFrame(teamName);
-		JPanel statusPanel = new JPanel();
 		JPanel myBoard = new JPanel();
 		JPanel boards = new JPanel();
 		Border blackline = BorderFactory.createLineBorder(Color.black);
 		TitledBorder border = BorderFactory.createTitledBorder(blackline, "Menu");
 		TitledBorder myBorder = BorderFactory.createTitledBorder(blackline, "My Board");
 		theirBorder = BorderFactory.createTitledBorder(blackline, "Opponent's Board");
-		TitledBorder consoleBorder = BorderFactory.createTitledBorder(blackline, "Message");
 		myBoard.setBorder(myBorder);
 		theirBoard.setBorder(theirBorder);
 		options.setBorder(border);
@@ -176,12 +183,18 @@ public class Battleship extends Thread implements ActionListener
 		theirBoard.setLayout(new GridLayout(11, 11));
 		boards.setLayout(new BoxLayout(boards, BoxLayout.PAGE_AXIS));
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
-		statusPanel.setBorder(consoleBorder);
 		frame.setLayout(new BorderLayout());
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(490, 800);
-		frame.setMinimumSize(new Dimension(490, 750));
-		
+		frame.setSize(600, 600);
+		frame.setMinimumSize(new Dimension(500, 500));
+		options.add(console);
+		options.add(chatText);
+		chatText.addActionListener(this);
+		chatText.setActionCommand("Chat");
+		sendChat.addActionListener(this);
+		sendChat.setActionCommand("Chat");
+		options.add(sendChat);
+		sendChat.setEnabled(false);
 		finishedButton.addActionListener(this);
 		finishedButton.setActionCommand("Finished");
 		finishedButton.setEnabled(false);
@@ -220,16 +233,20 @@ public class Battleship extends Thread implements ActionListener
 			myGrid.get(i).setEnabled(false);
 		}
 		consoleLabel.setEditable(false);
-		JScrollPane console = new JScrollPane(consoleLabel);
 		console.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-		console.setPreferredSize(new Dimension(frame.getWidth() - 50, 200));
-		statusPanel.add(console);
+		consoleLabel.setPreferredSize(new Dimension(140, 400));
+		consoleLabel.setLineWrap(true);
+		consoleLabel.setWrapStyleWord(true);
+		DefaultCaret caret = (DefaultCaret)consoleLabel.getCaret();
+		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 		boards.add(theirBoard);
 		boards.add(myBoard);
 		frame.add(options, BorderLayout.LINE_END);
 		frame.add(boards, BorderLayout.CENTER);
-		frame.add(statusPanel, BorderLayout.PAGE_END);
 		frame.setVisible(true);
+		while(!gameIsReady) {}
+		System.out.println(gameIsReady);
+		game.start();
 	}
 	
 	public static void startGame()
@@ -267,7 +284,6 @@ public class Battleship extends Thread implements ActionListener
 			toConsole("Connected to " + connection.getInetAddress().getHostAddress());
 			yourTurn = true;
 			setupStreams();
-			game.start();
 			whilePlayingGame();
 		}
 		catch(EOFException eof)
@@ -339,12 +355,10 @@ public class Battleship extends Thread implements ActionListener
 		output = new ObjectOutputStream(connection.getOutputStream());
 		output.flush();
 		input = new ObjectInputStream(connection.getInputStream());
-		toConsole("Streams are set up.");
 	}
 	
 	public static void whilePlayingGame() throws IOException
 	{
-		toConsole("The server and client are now connected.");
 		do
 		{
 			try
@@ -355,6 +369,7 @@ public class Battleship extends Thread implements ActionListener
 			{
 				toConsole("Something invalid tried to go through!");
 			}
+			gameIsReady = true;
 		}while(!quit);
 	}
 
@@ -393,50 +408,60 @@ public class Battleship extends Thread implements ActionListener
 	{
 		if(msg.getMessageType().equals("FIRE"))
 		{
+			yourTurn = true;
 			Coordinate coords = (Coordinate) msg.getMessage();
 			System.out.println(enemyTeam + " fired at " + coords);
 			if(hitOrMiss(coords))
 			{
 				sendMessage(new Hit(coords));
 				toConsole(enemyTeam + " hit " + coords);
+				myGrid.get(Coordinate.convertToBtn(coords)).setBackground(new Color(224, 44, 44));
 			}
 			else
 			{
 				sendMessage(new Miss(coords));
 				toConsole(enemyTeam + " missed " + coords);
+				myGrid.get(Coordinate.convertToBtn(coords)).setBackground(new Color(237, 237, 237));
 			}
+			nextTurn();
 		}
 		else if(msg.getMessageType().equals("MISS"))
 		{
+			yourTurn = false;
 			Coordinate coords = (Coordinate) msg.getMessage();
 			misses.add(coords);
-			System.out.println("Missed " + coords);
 			toConsole("You missed " + coords);
-			paintTheirGrid();
+			theirGrid.get(Coordinate.convertToBtn(coords)).setBackground(new Color(237, 237, 237));
+			nextTurn();
 		}
 		else if(msg.getMessageType().equals("HIT"))
 		{
+			yourTurn = false;
 			Coordinate coords = (Coordinate) msg.getMessage();
 			hits.add(coords);
-			System.out.println("Hit " + coords);
 			toConsole("You hit " + coords);
-			paintTheirGrid();
+			theirGrid.get(Coordinate.convertToBtn(coords)).setBackground(new Color(224, 44, 44));
+			nextTurn();
 		}
 		else if(msg.getMessageType().equals("SUNK"))
 		{
 			Ship ship = (Ship) msg.getMessage();
 			System.out.println("Sunk " + ship);
-			paintTheirGrid();
 		}
 		else if(msg.getMessageType().equals("TEAM"))
 		{
 			enemyTeam = (String) msg.getMessage();
-			System.out.println("Playing " + enemyTeam);
+			toConsole("Playing " + enemyTeam);
 		}
 		else if(msg.getMessageType().equals("READY"))
 		{
 			enemyReady = true;
 			if(!readyUp) toConsole(enemyTeam + " is ready.");
+		}
+		else if(msg.getMessageType().equals("CHAT"))
+		{
+			String message = (String) msg.getMessage();
+			toConsole(message);
 		}
 		else if(msg.getMessageType().equals("QUIT"))
 		{
@@ -469,6 +494,12 @@ public class Battleship extends Thread implements ActionListener
 		{
 			sendMessage(new Quit());
 			closeConnections();
+		}
+		else if(e.getActionCommand().equals("Chat"))
+		{
+			sendMessage(new Chat(teamName, chatText.getText()));
+			toConsole("You: " + chatText.getText());
+			chatText.setText("");
 		}
 		else if(!(currentSelection instanceof String))
 		{
@@ -531,42 +562,11 @@ public class Battleship extends Thread implements ActionListener
 		}
 	}
 	
-	public static void paintTheirGrid()
-	{
-		for(int o = 0; o < misses.size(); o++)
-		{
-			int i = 0;
-			for(int x = 0; x < 10; x++)
-			{
-				for(int y = 0; y < 10; y++)
-				{
-					Coordinate coords = new Coordinate(x, y);
-					JButton btn = theirGrid.get(i);
-					if(misses.get(o).equals(coords)) btn.setBackground(new Color(224, 44, 44));
-					i++;
-				}
-			}
-		}
-		for(int o = 0; o < hits.size(); o++)
-		{
-			int i = 0;
-			for(int x = 0; x < 10; x++)
-			{
-				for(int y = 0; y < 10; y++)
-				{
-					Coordinate coords = new Coordinate(x, y);
-					JButton btn = theirGrid.get(i);
-					if(misses.get(o).equals(coords)) btn.setBackground(new Color(179, 224, 43));
-					i++;
-				}
-			}
-		}
-	}
 	
 	public static void toConsole(String msg)
 	{
 		System.out.println(msg);
-		consoleLabel.setText(consoleLabel.getText() + "\n" + msg);
+		consoleLabel.setText(consoleLabel.getText() + "\n• " + msg);
 	}
 	
 	public void makeButtons(ArrayList<JButton> grid)
@@ -581,6 +581,8 @@ public class Battleship extends Thread implements ActionListener
 				newBtn.addActionListener(this);
 				newBtn.setFocusPainted(false);
 				newBtn.setBackground(new Color(89, 152, 255));
+				newBtn.setOpaque(true);
+				newBtn.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 				grid.add(newBtn);
 			}
 		}

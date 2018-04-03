@@ -80,6 +80,15 @@ class Ready extends BNP
 	}
 }
 
+class Chat extends BNP
+{
+	public Chat(String myTeam, String chatMessage)
+	{
+		setMessageType("CHAT");
+		setMessage(myTeam + ": " + chatMessage);
+	}
+}
+
 class Quit extends BNP
 {
 	public Quit()

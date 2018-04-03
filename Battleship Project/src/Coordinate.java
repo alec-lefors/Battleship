@@ -1,4 +1,7 @@
+import java.awt.Color;
 import java.io.Serializable;
+
+import javax.swing.JButton;
 
 public class Coordinate implements Serializable
 {
@@ -42,5 +45,19 @@ public class Coordinate implements Serializable
 			return true;
 		}
 		return false;
+	}
+	
+	public static int convertToBtn(Coordinate coords)
+	{
+		int i = 0;
+		for(int x = 0; x < 10; x++)
+		{
+			for(int y = 0; y < 10; y++)
+			{
+				if(coords.getX() == x && coords.getY() == y) return i;
+				i++;
+			}
+		}
+		return 99;
 	}
 }
