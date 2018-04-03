@@ -408,7 +408,6 @@ public class Battleship extends Thread implements ActionListener
 	{
 		if(msg.getMessageType().equals("FIRE"))
 		{
-			yourTurn = true;
 			Coordinate coords = (Coordinate) msg.getMessage();
 			System.out.println(enemyTeam + " fired at " + coords);
 			if(hitOrMiss(coords))
@@ -419,6 +418,7 @@ public class Battleship extends Thread implements ActionListener
 			}
 			else
 			{
+				yourTurn = true;
 				sendMessage(new Miss(coords));
 				toConsole(enemyTeam + " missed " + coords);
 				myGrid.get(Coordinate.convertToBtn(coords)).setBackground(new Color(237, 237, 237));
@@ -436,7 +436,7 @@ public class Battleship extends Thread implements ActionListener
 		}
 		else if(msg.getMessageType().equals("HIT"))
 		{
-			yourTurn = false;
+			yourTurn = true;
 			Coordinate coords = (Coordinate) msg.getMessage();
 			hits.add(coords);
 			toConsole("You hit " + coords);
@@ -566,7 +566,7 @@ public class Battleship extends Thread implements ActionListener
 	public static void toConsole(String msg)
 	{
 		System.out.println(msg);
-		consoleLabel.setText(consoleLabel.getText() + "\n• " + msg);
+		consoleLabel.setText(consoleLabel.getText() + "\n~ " + msg);
 	}
 	
 	public void makeButtons(ArrayList<JButton> grid)
