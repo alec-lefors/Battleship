@@ -1,4 +1,4 @@
-## Welcome to GitHub Pages
+## Welcome to Alec and Logan's Battleship
 
 You can use the [editor on GitHub](https://github.com/alec-lefors/battleship.github.io/edit/master/index.md) to maintain and preview the content for your website in Markdown files.
 
